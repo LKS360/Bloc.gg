@@ -1,3 +1,5 @@
+export const runtime = "nodejs";
+
 import { NextResponse } from "next/server";
 import { createSession } from "@/lib/auth";
 import { supabase } from "@/lib/supabaseClient";
@@ -7,7 +9,6 @@ export async function GET(req: Request) {
     const siteUrl = process.env.SITE_URL;
 
     if (!siteUrl) {
-      console.error("SITE_URL not configured");
       return NextResponse.json(
         { error: "SITE_URL not configured" },
         { status: 500 }
@@ -17,19 +18,20 @@ export async function GET(req: Request) {
     const url = new URL(req.url);
     const params = url.searchParams;
 
-    const steamId = params
-      .get("openid.claimed_id")
-      ?.replace("https://steamcommunity.com/openid/id/", "");
-
-    if (!steamId) {
+    const claimedId = params.get("openid.claimed_id");
+    if (!claimedId) {
       return NextResponse.json(
         { error: "Invalid OpenID return" },
         { status: 400 }
       );
     }
 
-    const apiKey = process.env.STEAM_API_KEY;
+    const steamId = claimedId.replace(
+      "https://steamcommunity.com/openid/id/",
+      ""
+    );
 
+    const apiKey = process.env.STEAM_API_KEY;
     if (!apiKey) {
       return NextResponse.json(
         { error: "STEAM_API_KEY not configured" },
@@ -42,7 +44,10 @@ export async function GET(req: Request) {
     );
 
     if (!steamRes.ok) {
-      return NextResponse.json({ error: "Steam API error" }, { status: 500 });
+      return NextResponse.json(
+        { error: "Steam API error" },
+        { status: 500 }
+      );
     }
 
     const data = await steamRes.json();
@@ -50,43 +55,33 @@ export async function GET(req: Request) {
 
     if (!player) {
       return NextResponse.json(
-        { error: "Steam API: player not found" },
+        { error: "Steam user not found" },
         { status: 404 }
       );
     }
 
-    const userData = {
-      steam_id: steamId,
-      name: player.personaname ?? "Steam User",
-      avatar: player.avatarfull ?? player.avatarmedium ?? null,
-      last_login: new Date().toISOString(),
-    };
-
-    const { data: dbUser, error: dbError } = await supabase
+    const { data: dbUser, error } = await supabase
       .from("users")
-      .upsert(userData, { onConflict: "steam_id" })
+      .upsert(
+        {
+          steam_id: steamId,
+          name: player.personaname ?? "Steam User",
+          avatar: player.avatarfull ?? null,
+          last_login: new Date().toISOString(),
+        },
+        { onConflict: "steam_id" }
+      )
       .select()
       .single();
 
-    if (dbError) {
-      console.error("Supabase upsert error:", dbError);
-      return NextResponse.json({ error: "Database error" }, { status: 500 });
+    if (error) {
+      console.error("Supabase error:", error);
+      return NextResponse.json(
+        { error: "Database error" },
+        { status: 500 }
+      );
     }
 
-    const ip =
-      req.headers.get("x-forwarded-for") ||
-      req.headers.get("x-real-ip") ||
-      "unknown";
-
-    const userAgent = req.headers.get("user-agent") ?? "unknown";
-
-    await supabase.from("admin_logs").insert({
-      admin_steam_id: steamId,
-      action: "login",
-      details: `Usuário logou no sistema.\nIP: ${ip}\nNavegador: ${userAgent}`,
-    });
-
-    // 🔐 Cria sessão JWT (7 dias)
     const token = createSession({
       id: steamId,
       steamId,
@@ -96,21 +91,24 @@ export async function GET(req: Request) {
     });
 
     const response = NextResponse.redirect(`${siteUrl}/?logged=1`);
-    response.headers.set("Cache-Control", "no-store");
 
     response.cookies.set({
       name: "session",
       value: token,
       httpOnly: true,
       secure: siteUrl.startsWith("https"),
-      sameSite: "lax",
       path: "/",
       maxAge: 60 * 60 * 24 * 7,
     });
 
+    response.headers.set("Cache-Control", "no-store");
+
     return response;
-  } catch (error) {
-    console.error("Steam return error:", error);
-    return NextResponse.json({ error: "Internal error" }, { status: 500 });
+  } catch (err) {
+    console.error("Steam return error:", err);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
 }
