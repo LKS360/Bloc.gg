@@ -1,17 +1,13 @@
-import HomeFeatures from "@/components/HomeFeatures";
-import Footer from "@/components/Footer";
+import Hero from "@/components/home/Hero";
+import Features from "@/components/home/Features";
+import Footer from "@/components/home/Footer";
 
-export default function Home() {
+export default function HomePage() {
   return (
-    <>
-      {/* Hero já existente */}
-      
-      <HomeFeatures />
-
-      {/* CTA */}
-      {/* (código do CTA aqui) */}
-
+    <main className="bg-[#0A0C10] text-white">
+      <Hero />
+      <Features />
       <Footer />
-    </>
+    </main>
   );
 }
