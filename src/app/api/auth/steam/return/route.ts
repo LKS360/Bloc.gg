@@ -68,8 +68,15 @@ export async function GET(req: Request) {
     });
 
     return response;
-  } catch (err) {
-    console.error("Steam return error:", err);
-    return NextResponse.json({ error: "Internal error" }, { status: 500 });
-  }
+} catch (err: any) {
+  console.error("Steam return error:", err);
+
+  return NextResponse.json(
+    {
+      error: "Internal error",
+      message: err?.message,
+      stack: err?.stack,
+    },
+    { status: 500 }
+  );
 }
