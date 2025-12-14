@@ -1,9 +1,7 @@
 import { NextResponse } from "next/server";
 
-export const runtime = "nodejs";
-
 export async function GET() {
-  const SITE_URL = process.env.SITE_URL || "/";
+  const SITE_URL = process.env.SITE_URL!;
 
   const res = NextResponse.redirect(SITE_URL);
 
@@ -13,6 +11,7 @@ export async function GET() {
     maxAge: 0,
     httpOnly: true,
     secure: true,
+    sameSite: "lax",
     path: "/",
   });
 
