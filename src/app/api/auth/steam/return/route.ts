@@ -67,9 +67,14 @@ export async function GET(req: Request) {
       role: (dbUser as any).role ?? "user",
     });
 
-    const response = NextResponse.redirect(
-      `${process.env.SITE_URL}/?logged=1`
-    );
+    const siteUrl =
+  process.env.SITE_URL ?? "https://bloc-gg.vercel.app";
+
+const response = NextResponse.redirect(
+  `${siteUrl}/?logged=1`
+);
+
+console.log("SITE_URL:", process.env.SITE_URL);
 
     response.cookies.set({
       name: "session",
