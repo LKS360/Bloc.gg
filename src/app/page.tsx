@@ -1,10 +1,17 @@
-import { Suspense } from "react";
-import HomeClient from "./HomeClient";
+import HomeFeatures from "@/components/HomeFeatures";
+import Footer from "@/components/Footer";
 
-export default function Page() {
+export default function Home() {
   return (
-    <Suspense fallback={null}>
-      <HomeClient />
-    </Suspense>
+    <>
+      {/* Hero já existente */}
+      
+      <HomeFeatures />
+
+      {/* CTA */}
+      {/* (código do CTA aqui) */}
+
+      <Footer />
+    </>
   );
 }
