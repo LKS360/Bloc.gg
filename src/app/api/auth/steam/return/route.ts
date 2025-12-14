@@ -4,6 +4,16 @@ import { supabase } from "@/lib/supabaseClient";
 
 export async function GET(req: Request) {
   try {
+    const siteUrl = process.env.SITE_URL;
+
+    if (!siteUrl) {
+      console.error("SITE_URL not configured");
+      return NextResponse.json(
+        { error: "SITE_URL not configured" },
+        { status: 500 }
+      );
+    }
+
     const url = new URL(req.url);
     const params = url.searchParams;
 
@@ -19,6 +29,13 @@ export async function GET(req: Request) {
     }
 
     const apiKey = process.env.STEAM_API_KEY;
+
+    if (!apiKey) {
+      return NextResponse.json(
+        { error: "STEAM_API_KEY not configured" },
+        { status: 500 }
+      );
+    }
 
     const steamRes = await fetch(
       `https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=${apiKey}&steamids=${steamId}`
@@ -69,7 +86,7 @@ export async function GET(req: Request) {
       details: `Usuário logou no sistema.\nIP: ${ip}\nNavegador: ${userAgent}`,
     });
 
-    // 🔥 CRIA JWT VALIDADE DE 7 DIAS
+    // 🔐 Cria sessão JWT (7 dias)
     const token = createSession({
       id: steamId,
       steamId,
@@ -78,14 +95,15 @@ export async function GET(req: Request) {
       role: dbUser.role ?? "user",
     });
 
-    const response = NextResponse.redirect("http://localhost:3000/?logged=1");
+    const response = NextResponse.redirect(`${siteUrl}/?logged=1`);
     response.headers.set("Cache-Control", "no-store");
 
     response.cookies.set({
       name: "session",
       value: token,
       httpOnly: true,
-      secure: false,
+      secure: siteUrl.startsWith("https"),
+      sameSite: "lax",
       path: "/",
       maxAge: 60 * 60 * 24 * 7,
     });
