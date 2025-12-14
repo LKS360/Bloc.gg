@@ -1,14 +1,14 @@
-export const runtime = "nodejs";
-
 import { NextResponse } from "next/server";
 import { createSession } from "@/lib/auth";
 import { supabase } from "@/lib/supabaseClient";
 
+export const runtime = "nodejs";
+
 export async function GET(req: Request) {
   try {
-    const siteUrl = process.env.SITE_URL;
+    const SITE_URL = process.env.SITE_URL;
 
-    if (!siteUrl) {
+    if (!SITE_URL) {
       return NextResponse.json(
         { error: "SITE_URL not configured" },
         { status: 500 }
@@ -19,6 +19,7 @@ export async function GET(req: Request) {
     const params = url.searchParams;
 
     const claimedId = params.get("openid.claimed_id");
+
     if (!claimedId) {
       return NextResponse.json(
         { error: "Invalid OpenID return" },
@@ -32,12 +33,6 @@ export async function GET(req: Request) {
     );
 
     const apiKey = process.env.STEAM_API_KEY;
-    if (!apiKey) {
-      return NextResponse.json(
-        { error: "STEAM_API_KEY not configured" },
-        { status: 500 }
-      );
-    }
 
     const steamRes = await fetch(
       `https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=${apiKey}&steamids=${steamId}`
@@ -60,22 +55,20 @@ export async function GET(req: Request) {
       );
     }
 
+    const userData = {
+      steam_id: steamId,
+      name: player.personaname ?? "Steam User",
+      avatar: player.avatarfull ?? null,
+      last_login: new Date().toISOString(),
+    };
+
     const { data: dbUser, error } = await supabase
       .from("users")
-      .upsert(
-        {
-          steam_id: steamId,
-          name: player.personaname ?? "Steam User",
-          avatar: player.avatarfull ?? null,
-          last_login: new Date().toISOString(),
-        },
-        { onConflict: "steam_id" }
-      )
+      .upsert(userData, { onConflict: "steam_id" })
       .select()
       .single();
 
     if (error) {
-      console.error("Supabase error:", error);
       return NextResponse.json(
         { error: "Database error" },
         { status: 500 }
@@ -90,18 +83,17 @@ export async function GET(req: Request) {
       role: dbUser.role ?? "user",
     });
 
-    const response = NextResponse.redirect(`${siteUrl}/?logged=1`);
+    const response = NextResponse.redirect(`${SITE_URL}/?logged=1`);
 
     response.cookies.set({
       name: "session",
       value: token,
       httpOnly: true,
-      secure: siteUrl.startsWith("https"),
+      secure: true, // HTTPS na Vercel
+      sameSite: "lax",
       path: "/",
       maxAge: 60 * 60 * 24 * 7,
     });
-
-    response.headers.set("Cache-Control", "no-store");
 
     return response;
   } catch (err) {
