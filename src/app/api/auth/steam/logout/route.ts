@@ -1,17 +1,26 @@
 import { NextResponse } from "next/server";
 
 export async function GET() {
-  const res = NextResponse.redirect("http://localhost:3000/");
+  const siteUrl = process.env.SITE_URL;
+
+  if (!siteUrl) {
+    return NextResponse.json(
+      { error: "SITE_URL not configured" },
+      { status: 500 }
+    );
+  }
+
+  const response = NextResponse.redirect(siteUrl);
 
   // Apaga o cookie de sessão
-  res.cookies.set({
+  response.cookies.set({
     name: "session",
     value: "",
     maxAge: 0,
     httpOnly: true,
-    secure: false, // coloque true em produção com HTTPS
+    secure: siteUrl.startsWith("https://"),
     path: "/",
   });
 
-  return res;
+  return response;
 }
