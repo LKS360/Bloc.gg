@@ -1,17 +1,16 @@
 import { NextResponse } from "next/server";
 
-export async function GET() {
-  const SITE_URL = process.env.SITE_URL!;
+export async function GET(req: Request) {
+  const origin = new URL(req.url).origin;
 
-  const res = NextResponse.redirect(SITE_URL);
+  const res = NextResponse.redirect(origin);
 
   res.cookies.set({
     name: "session",
     value: "",
     maxAge: 0,
     httpOnly: true,
-    secure: true,
-    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
     path: "/",
   });
 
