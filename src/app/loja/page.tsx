@@ -48,10 +48,8 @@ export default function LojaVipPage() {
         <section className="grid gap-8 md:grid-cols-[1.1fr,0.9fr] mb-14">
           {/* PLANO VIP – destaque */}
           <div className="relative">
-            {/* glow da borda */}
             <div className="absolute -inset-[1px] rounded-3xl bg-gradient-to-br from-[#FF7A00] via-[#FFD54A] to-[#FF7A00] opacity-70 blur-sm" />
             <div className="relative rounded-3xl bg-[#070910] border border-[#FF7A00]/40 px-7 py-7 md:px-10 md:py-9 shadow-[0_0_35px_rgba(0,0,0,0.9)]">
-              {/* selo mais vendido */}
               <div className="flex justify-between items-center mb-5">
                 <span className="inline-flex items-center gap-2 rounded-full bg-[#1A1F2A] px-3 py-1 text-[11px] font-semibold text-[#FFD54A] border border-[#FFD54A]/30">
                   <span className="text-xs">🔥</span> MAIS VENDIDO
@@ -86,7 +84,7 @@ export default function LojaVipPage() {
               </ul>
 
               <Link
-                href="/loja" // aqui depois você aponta pro seu fluxo de pagamento
+                href="/loja"
                 className="group inline-flex w-full items-center justify-center rounded-full bg-[#FF7A00] px-6 py-3 text-sm md:text-base font-semibold text-black shadow-[0_0_30px_rgba(255,122,0,0.8)] hover:bg-[#ff9a26] transition"
               >
                 Ativar VIP agora
@@ -150,10 +148,7 @@ export default function LojaVipPage() {
         <section className="mb-14">
           <div className="mb-4 flex items-center justify-between gap-3">
             <h2 className="text-lg md:text-xl font-semibold">
-              Compare{" "}
-              <span className="text-[#FF7A00]">
-                Gratuito vs VIP
-              </span>
+              Compare <span className="text-[#FF7A00]">Gratuito vs VIP</span>
             </h2>
             <span className="text-[11px] text-gray-400">
               Veja o que muda ao ativar o plano VIP nos servidores.
